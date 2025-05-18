@@ -125,7 +125,11 @@ done
 # 运行程序
 if [ "$MODE" = "api" ]; then
     echo "启动API服务，监听 $HOST:$PORT..."
-    python main.py api --host "$HOST" --port "$PORT" ${DEBUG} == "true" && "--debug" || ""
+    if [ "$DEBUG" = "true" ]; then
+        python main.py api --host "$HOST" --port "$PORT" --debug
+    else
+        python main.py api --host "$HOST" --port "$PORT"
+    fi
 else
     # 构建命令行
     CMD="python main.py analyze"

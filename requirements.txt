@@ -1,23 +1,23 @@
-# AI DEBUG系统依赖项
+# AI DEBUG System Dependencies
 
-# Web框架
+# Web Framework
 flask>=2.0.0
 
-# HTTP客户端
+# HTTP Client
 requests>=2.25.0
 
-# 数据处理
+# Data Processing
 numpy>=1.20.0
 
-# 日志处理
+# Logging
 python-json-logger>=2.0.0
 
-# 日期时间处理
+# Date/Time Handling
 python-dateutil>=2.8.0
 
-# Markdown处理（可选，用于格式化）
+# Markdown (Optional, for formatting)
 markdown>=3.3.0
 
-# 测试工具
+# Testing Tools
 pytest>=6.0.0
 pytest-cov>=2.10.0
