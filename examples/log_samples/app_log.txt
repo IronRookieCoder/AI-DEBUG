@@ -1,0 +1,17 @@
+2023-06-15 14:30:22 INFO - 应用启动
+2023-06-15 14:30:23 INFO - 开始加载配置
+2023-06-15 14:30:23 INFO - 配置加载完成
+2023-06-15 14:30:24 INFO - 开始处理数据
+2023-06-15 14:30:24 DEBUG - 处理数据项: {"id": 1, "value": 10}
+2023-06-15 14:30:24 DEBUG - 处理数据项: {"id": 2, "value": 0}
+2023-06-15 14:30:25 ERROR - 处理数据时出错: division by zero
+2023-06-15 14:30:25 ERROR - 错误详情: Traceback (most recent call last):
+  File "app.py", line 42, in <module>
+    result = process_data(data)
+  File "app.py", line 21, in process_data
+    return data[0]['value'] / data[1]['value']
+ZeroDivisionError: division by zero
+2023-06-15 14:30:26 WARN - 数据处理中断
+2023-06-15 14:30:26 INFO - 尝试使用备选处理流程
+2023-06-15 14:30:26 INFO - 备选处理流程完成
+2023-06-15 14:30:27 INFO - 应用关闭

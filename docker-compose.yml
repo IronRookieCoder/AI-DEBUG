@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  ai-debug:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./config:/app/config
+      - ./logs:/app/logs
+    environment:
+      - LLM_API_KEY=${LLM_API_KEY}
+    restart: unless-stopped
+    networks:
+      - ai-debug-network
+
+networks:
+  ai-debug-network:
+    driver: bridge

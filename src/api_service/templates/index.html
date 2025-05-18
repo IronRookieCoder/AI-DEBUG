@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI DEBUG 系统</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f7fa;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      h1 {
+        color: #2c3e50;
+        font-size: 36px;
+      }
+
+      .description {
+        font-size: 18px;
+        color: #7f8c8d;
+        margin-bottom: 30px;
+      }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .card {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #2c3e50;
+      }
+
+      textarea,
+      input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-family: inherit;
+        font-size: 16px;
+      }
+
+      textarea {
+        min-height: 100px;
+      }
+
+      select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-family: inherit;
+        font-size: 16px;
+        background-color: white;
+      }
+
+      button {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #2980b9;
+      }
+
+      #result {
+        margin-top: 30px;
+        display: none;
+      }
+
+      .result-content {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+      }
+
+      .loader {
+        display: none;
+        text-align: center;
+        margin: 20px 0;
+      }
+
+      .loader-spinner {
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 2s linear infinite;
+        margin: 0 auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .tabs {
+        display: flex;
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 20px;
+      }
+
+      .tab {
+        padding: 10px 20px;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+      }
+
+      .tab.active {
+        border-color: #3498db;
+        color: #3498db;
+        font-weight: bold;
+      }
+
+      .error {
+        color: #e74c3c;
+        font-size: 14px;
+        margin-top: 5px;
+      }
+
+      .examples {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .example-btn {
+        background-color: #ecf0f1;
+        color: #2c3e50;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .example-btn:hover {
+        background-color: #dde4e6;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>AI DEBUG 系统</h1>
+      <p class="description">基于LLM的智能调试系统，提供错误分析和修复建议</p>
+    </header>
+
+    <div class="container">
+      <div class="card">
+        <div class="tabs">
+          <div class="tab active" data-tab="input-form">调试输入</div>
+          <div class="tab" data-tab="api-docs">API文档</div>
+        </div>
+
+        <div id="input-form" class="tab-content">
+          <form id="debug-form">
+            <div class="form-group">
+              <label for="problem-description">问题描述</label>
+              <textarea
+                id="problem-description"
+                name="problem_description"
+                placeholder="请描述您遇到的问题..."
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="error-message">错误信息</label>
+              <textarea
+                id="error-message"
+                name="error_message"
+                placeholder="请粘贴完整的错误信息..."
+              ></textarea>
+              <div class="examples">
+                <button
+                  type="button"
+                  class="example-btn"
+                  data-target="error-message"
+                  data-example="TypeError: Cannot read property 'map' of undefined at processData (/app/src/utils.js:25:10)"
+                >
+                  JS TypeError
+                </button>
+                <button
+                  type="button"
+                  class="example-btn"
+                  data-target="error-message"
+                  data-example='Traceback (most recent call last):
+  File "app.py", line 42, in &lt;module&gt;
+    result = process_data(data)
+  File "app.py", line 21, in process_data
+    return data[0][&apos;value&apos;] / 0
+ZeroDivisionError: division by zero'
+                >
+                  Python异常
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="code-snippet">代码片段</label>
+              <textarea
+                id="code-snippet"
+                name="code_snippet"
+                placeholder="请粘贴相关代码片段..."
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="log-info">日志信息</label>
+              <textarea
+                id="log-info"
+                name="log_info"
+                placeholder="请粘贴相关日志信息..."
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="output-format">输出格式</label>
+              <select id="output-format" name="output_format">
+                <option value="html">HTML</option>
+                <option value="markdown">Markdown</option>
+                <option value="json">JSON</option>
+              </select>
+            </div>
+
+            <button type="submit">分析调试</button>
+          </form>
+        </div>
+
+        <div id="api-docs" class="tab-content" style="display: none">
+          <h2>AI DEBUG API 文档</h2>
+
+          <h3>分析端点</h3>
+          <p><code>POST /api/v1/analyze</code></p>
+
+          <h4>请求体示例：</h4>
+          <pre>
+{
+  "error_message": "TypeError: Cannot read property 'length' of undefined",
+  "code_snippet": "function processArray(arr) {\n  return arr.map(item => item.value);\n}",
+  "problem_description": "调用processArray函数时出错",
+  "log_info": "2023-06-15 14:30:22 ERROR - 处理数据时出错",
+  "output_format": "json"
+}
+</pre
+          >
+
+          <h4>响应示例：</h4>
+          <pre>
+{
+  "analyses": {
+    "error_analysis": { ... },
+    "code_analysis": { ... },
+    "root_cause": { ... },
+    "solution": { ... }
+  },
+  "similar_bugs": [ ... ]
+}
+</pre
+          >
+
+          <h3>健康检查端点</h3>
+          <p><code>GET /api/v1/health</code></p>
+
+          <h3>反馈端点</h3>
+          <p><code>POST /api/v1/feedback</code></p>
+        </div>
+      </div>
+
+      <div class="loader">
+        <div class="loader-spinner"></div>
+        <p>正在分析中，请稍候...</p>
+      </div>
+
+      <div id="result">
+        <h2>分析结果</h2>
+        <div class="result-content" id="result-content"></div>
+      </div>
+    </div>
+
+    <script>
+      // 切换标签页
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          // 激活选中的标签
+          document
+            .querySelectorAll(".tab")
+            .forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+
+          // 显示对应内容
+          const tabId = tab.getAttribute("data-tab");
+          document.querySelectorAll(".tab-content").forEach((content) => {
+            content.style.display = "none";
+          });
+          document.getElementById(tabId).style.display = "block";
+        });
+      });
+
+      // 示例数据填充
+      document.querySelectorAll(".example-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const targetId = btn.getAttribute("data-target");
+          const example = btn.getAttribute("data-example");
+          document.getElementById(targetId).value = example;
+        });
+      });
+
+      // 表单提交
+      document
+        .getElementById("debug-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          // 显示加载动画
+          document.querySelector(".loader").style.display = "block";
+          document.getElementById("result").style.display = "none";
+
+          // 获取表单数据
+          const formData = new FormData(e.target);
+          const data = {};
+
+          formData.forEach((value, key) => {
+            if (value.trim()) {
+              data[key] = value;
+            }
+          });
+
+          // 验证是否填写了至少一项
+          if (
+            !data.error_message &&
+            !data.code_snippet &&
+            !data.problem_description &&
+            !data.log_info
+          ) {
+            alert("请至少填写一项：错误信息、代码片段、问题描述或日志信息");
+            document.querySelector(".loader").style.display = "none";
+            return;
+          }
+
+          try {
+            // 发送API请求
+            const response = await fetch("/api/v1/analyze", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // 解析并显示结果
+            const outputFormat = data.output_format || "html";
+
+            if (outputFormat === "json") {
+              const result = await response.json();
+              document.getElementById(
+                "result-content"
+              ).innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+            } else if (outputFormat === "html") {
+              const result = await response.text();
+              document.getElementById("result-content").innerHTML = result;
+            } else {
+              const result = await response.text();
+              document.getElementById(
+                "result-content"
+              ).innerHTML = `<pre>${result}</pre>`;
+            }
+
+            // 显示结果
+            document.getElementById("result").style.display = "block";
+          } catch (error) {
+            console.error("分析请求失败:", error);
+            document.getElementById(
+              "result-content"
+            ).innerHTML = `<div class="error">请求失败: ${error.message}</div>`;
+            document.getElementById("result").style.display = "block";
+          } finally {
+            // 隐藏加载动画
+            document.querySelector(".loader").style.display = "none";
+
+            // 滚动到结果部分
+            document
+              .getElementById("result")
+              .scrollIntoView({ behavior: "smooth" });
+          }
+        });
+    </script>
+  </body>
+</html>
