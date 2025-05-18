@@ -9,6 +9,24 @@ import traceback
 import logging
 import requests
 from typing import Dict, Any, List, Optional, Tuple, Union
+from abc import ABC, abstractmethod
+
+# 从providers模块导入LLM提供者实现
+from .providers import (
+    LLMProvider, OpenAIProvider, AzureOpenAIProvider, 
+    AnthropicProvider, create_llm_provider, OPENAI_SDK_AVAILABLE
+)
+
+# 尝试导入httpx库以支持AnthropicProvider
+try:
+    import httpx
+except ImportError:
+    pass
+
+try:
+    from openai import OpenAI, AzureOpenAI
+except ImportError:
+    pass
 
 from ..config import get_config
 
@@ -22,10 +40,25 @@ class LLMClient:
     def __init__(self):
         """初始化LLM客户端"""
         self.config = get_config("llm")
-        self.api_key = self.config.get("api_key", os.environ.get("LLM_API_KEY", ""))
-        self.model = self.config.get("model", "gpt-4")
-        self.temperature = self.config.get("temperature", 0.3)
-        self.max_tokens = self.config.get("max_tokens", 2000)
+        self.provider_type = self.config.get("provider", "openai")
+        provider_config = {
+            "api_key": self.config.get("api_key", os.environ.get("LLM_API_KEY", "")),
+            "model": self.config.get("model", "gpt-4"),
+            "temperature": self.config.get("temperature", 0.3),
+            "max_tokens": self.config.get("max_tokens", 2000),
+            "endpoint": self.config.get("endpoint", os.environ.get("LLM_ENDPOINT", "")),
+            "deployment_name": self.config.get("deployment_name", "")
+        }
+        self.provider = create_llm_provider(self.provider_type, provider_config)
+        
+        if not self.provider:
+            logger.warning(f"无法创建LLM提供者实例，将使用OpenAI作为默认提供者")
+            self.provider = OpenAIProvider(
+                api_key=provider_config["api_key"],
+                model=provider_config["model"],
+                temperature=provider_config["temperature"],
+                max_tokens=provider_config["max_tokens"]
+            )
     
     def generate(self, prompt: str, system_prompt: str = None) -> Optional[str]:
         """
@@ -38,43 +71,11 @@ class LLMClient:
         Returns:
             生成的文本，失败时返回None
         """
-        try:
-            # 构建API请求
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.api_key}"
-            }
-            
-            messages = []
-            if system_prompt:
-                messages.append({"role": "system", "content": system_prompt})
-            messages.append({"role": "user", "content": prompt})
-            
-            data = {
-                "model": self.model,
-                "messages": messages,
-                "temperature": self.temperature,
-                "max_tokens": self.max_tokens
-            }
-            
-            # 调用API
-            logger.debug(f"调用LLM API，模型: {self.model}, prompt长度: {len(prompt)}")
-            response = requests.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers=headers,
-                json=data
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                return result["choices"][0]["message"]["content"]
-            else:
-                logger.error(f"API调用失败: {response.status_code} - {response.text}")
-                return None
-            
-        except Exception as e:
-            logger.exception(f"LLM调用异常: {e}")
+        if not self.provider:
+            logger.error("LLM提供者未初始化")
             return None
+        
+        return self.provider.generate_text(prompt, system_prompt)
     
     def generate_with_retry(self, prompt: str, system_prompt: str = None, max_retries: int = 2) -> Optional[str]:
         """
@@ -682,7 +683,7 @@ class CodeAnalyzer:
         # 基于严重问题数量调整
         score -= severe_issues * 0.8
         
-        # 基于总体问题数量调整
+        # 基于总体问题数量调整分数
         total_issues = len(logic_issues) + len(bugs) + len(security)
         score -= total_issues * 0.2
         
@@ -1684,6 +1685,7 @@ class FixSuggestionGenerator:
         system_prompt = """你是一位资深的软件工程师和调试专家。请根据提供的信息，生成详细的修复方案。
         你的解决方案应该包括：
         
+
         1. 简明的解决方案总结
         2. 详细的修复步骤
         3. 具体的代码修改建议（包含原始代码和修复后的代码）
@@ -1758,7 +1760,7 @@ class FixSuggestionGenerator:
             context_parts.append(solutions_text)
         
         # 组合提示词
-        prompt = "请根据以下信息，提供详细的解决方案：\n\n" + "\n\n".join(context_parts)
+        prompt = "请根据以下信息，提供详细的修复方案：\n\n" + "\n\n".join(context_parts)
         
         # 调用LLM生成解决方案
         solution_text = self.llm_client.generate_with_retry(prompt, system_prompt)
@@ -2049,8 +2051,7 @@ class AnalysisEngine:
         
         # 获取输入
         inputs = input_data.get("inputs", {})
-        
-        # 执行分析流程
+          # 执行分析流程
         try:
             # 1. 分析错误信息
             error_analysis = None
@@ -2096,8 +2097,7 @@ class AnalysisEngine:
                 )
                 result["analyses"]["solution"] = solution
                 result["metadata"]["components_used"].append("FixSuggestionGenerator")
-            
-            # 6. 整合分析结果，生成摘要
+              # 6. 整合分析结果，生成摘要
             result["summary"] = self._generate_analysis_summary(result)
             
         except Exception as e:

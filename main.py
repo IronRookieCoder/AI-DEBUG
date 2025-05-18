@@ -6,11 +6,23 @@ import os
 import sys
 
 # 将项目根目录添加到Python路径
-root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+root_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, root_dir)
+
+# 加载环境变量文件
+try:
+    from dotenv import load_dotenv
+    # 优先加载项目根目录下的.env文件
+    env_path = os.path.join(root_dir, '.env')
+    if os.path.exists(env_path):
+        load_dotenv(env_path)
+        print(f"已加载环境变量文件: {env_path}")
+except ImportError:
+    print("警告: python-dotenv未安装，无法从.env文件加载环境变量")
 
 from src.config import get_config
 from src.api_service import run_api_service
+from src.utils import get_env
 
 
 def parse_args():
@@ -114,6 +126,14 @@ def run_analysis(args):
 def main():
     """主函数"""
     args = parse_args()
+    
+    # 打印环境变量状态
+    api_key = get_env('OPENAI_API_KEY')
+    if api_key:
+        masked_key = api_key[:4] + '*' * (len(api_key) - 8) + api_key[-4:] if len(api_key) > 8 else '****'
+        print(f"已检测到OPENAI_API_KEY环境变量 ({masked_key})")
+    else:
+        print("警告: 未检测到OPENAI_API_KEY环境变量，请确保在配置文件或.env文件中设置")
     
     if args.command == "api":
         # 启动API服务

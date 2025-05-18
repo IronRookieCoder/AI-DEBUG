@@ -9,22 +9,34 @@ from unittest.mock import patch, MagicMock
 # 添加项目根目录到路径，以便导入项目模块
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
+# 从llm_engine模块导入需要测试的类和函数
 from src.llm_engine import (
-    LLMClient, 
+    LLMClient,
     ErrorMessageParser, 
     CodeAnalyzer, 
     ProblemCauseInferenceModule, 
     FixSuggestionGenerator,
-    AnalysisEngine
+    AnalysisEngine,
+    analyze
+)
+
+# 从providers模块导入LLM提供者类
+from src.llm_engine.providers import (
+    LLMProvider,
+    OpenAIProvider,
+    AzureOpenAIProvider,
+    AnthropicProvider,
+    create_llm_provider
 )
 
 
-class TestLLMClient(unittest.TestCase):
-    """测试LLM客户端"""
+class TestLLMProviders(unittest.TestCase):
+    """测试LLM提供者"""
     
-    @patch('src.llm_engine.requests.post')
-    def test_generate(self, mock_post):
-        """测试生成方法"""
+    @patch('src.llm_engine.providers.OPENAI_SDK_AVAILABLE', False)
+    @patch('src.llm_engine.providers.requests.post')
+    def test_openai_provider(self, mock_post, mock_sdk):
+        """测试OpenAI提供者"""
         # 模拟API返回
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -33,13 +45,80 @@ class TestLLMClient(unittest.TestCase):
         }
         mock_post.return_value = mock_response
         
+        # 创建提供者并调用方法
+        provider = OpenAIProvider(api_key="test_key")
+        self.assertEqual(provider._implementation, "requests")  # 确认使用requests实现
+        result = provider.generate_text("测试提示")
+        
+        # 验证结果
+        self.assertEqual(result, "测试回复")
+        mock_post.assert_called_once()
+    
+    @patch('src.llm_engine.providers.OPENAI_SDK_AVAILABLE', False)
+    @patch('src.llm_engine.providers.requests.post')
+    def test_azure_provider(self, mock_post, mock_sdk):
+        """测试Azure OpenAI提供者"""
+        # 模拟API返回
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "choices": [{"message": {"content": "测试回复"}}]
+        }
+        mock_post.return_value = mock_response
+        
+        # 创建提供者并调用方法
+        provider = AzureOpenAIProvider(
+            api_key="test_key", 
+            endpoint="https://test.openai.azure.com", 
+            deployment_name="test-deployment"
+        )
+        self.assertEqual(provider._implementation, "requests")  # 确认使用requests实现
+        result = provider.generate_text("测试提示")
+        
+        # 验证结果
+        self.assertEqual(result, "测试回复")
+        mock_post.assert_called_once()
+    
+    @patch('src.llm_engine.providers.OPENAI_SDK_AVAILABLE', False)
+    @patch('src.llm_engine.providers.requests.post')
+    def test_anthropic_provider(self, mock_post, mock_sdk):
+        """测试Anthropic提供者"""
+        # 模拟API返回
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "content": [{"text": "测试回复"}]
+        }
+        mock_post.return_value = mock_response
+        
+        # 创建提供者并调用方法
+        provider = AnthropicProvider(api_key="test_key")
+        self.assertEqual(provider._implementation, "requests")  # 确认使用requests实现
+        result = provider.generate_text("测试提示")
+        
+        # 验证结果
+        self.assertEqual(result, "测试回复")
+        mock_post.assert_called_once()
+
+
+class TestLLMClient(unittest.TestCase):
+    """测试LLM客户端"""
+    
+    @patch('src.llm_engine.providers.create_llm_provider')
+    def test_generate(self, mock_create_provider):
+        """测试生成方法"""
+        # 模拟提供者
+        mock_provider = MagicMock(spec=LLMProvider)
+        mock_provider.generate_text.return_value = "测试回复"
+        mock_create_provider.return_value = mock_provider
+        
         # 创建客户端并调用方法
         client = LLMClient()
         result = client.generate("测试提示")
         
         # 验证结果
         self.assertEqual(result, "测试回复")
-        mock_post.assert_called_once()
+        mock_provider.generate_text.assert_called_once()
 
 
 class TestErrorMessageParser(unittest.TestCase):

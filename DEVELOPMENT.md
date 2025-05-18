@@ -38,11 +38,17 @@ AI DEBUG 系统采用模块化设计，主要包含以下核心组件：
 
 主要类：
 
-- `LLMClient`：与 LLM API 通信的客户端
-- `ErrorAnalyzer`：错误信息分析器
+- `providers`模块：
+  - `LLMProvider`：LLM 提供者的抽象基类
+  - `OpenAIProvider`：OpenAI API 实现（支持 SDK 和 HTTP API）
+  - `AzureOpenAIProvider`：Azure OpenAI API 实现（支持 SDK 和 HTTP API）
+  - `AnthropicProvider`：Anthropic Claude API 实现
+  - `create_llm_provider`：工厂函数，用于创建不同的 LLM 提供者实例
+- `LLMClient`：与 LLM API 通信的客户端，使用工厂方法创建并管理不同的 LLM 提供者
+- `ErrorMessageParser`：错误信息分析器
 - `CodeAnalyzer`：代码分析器
-- `RootCauseAnalyzer`：根因分析器
-- `SolutionGenerator`：解决方案生成器
+- `ProblemCauseInferenceModule`：根因推断模块
+- `FixSuggestionGenerator`：修复建议生成器
 - `BugKnowledgeBaseClient`：与 Bug 知识库交互的客户端
 - `AnalysisEngine`：协调各分析器的引擎
 
@@ -50,7 +56,7 @@ AI DEBUG 系统采用模块化设计，主要包含以下核心组件：
 
 - 添加新的分析器：创建新的分析器类，专注于特定类型的分析
 - 改进提示词：优化各分析器中的提示词模板，提高 LLM 响应质量
-- 支持新的 LLM：在`LLMClient`中添加对新模型或 API 的支持
+- 支持新的 LLM：在`providers.py`中实现新的`LLMProvider`子类并在`create_llm_provider`工厂函数中注册
 
 ### 输出层 (`src/output_layer`)
 
@@ -95,7 +101,19 @@ API 服务提供 HTTP 接口和 Web 界面，使系统能够被外部调用和�
 扩展指南：
 
 - 添加新的配置项：修改`config.json`并在相应模块中使用
-- 支持环境变量：增强`ConfigManager`以支持从环境变量加载配置
+- 环境变量配置：系统支持两种方式设置环境变量
+  1. 使用环境变量文件：在项目根目录创建`.env`文件
+  2. 直接在系统中设置环境变量
+
+环境变量文件格式示例：
+
+```
+# API密钥配置
+OPENAI_API_KEY=sk-your-api-key-here
+
+# 其他配置
+DEBUG=true
+```
 
 ### 工具模块 (`src/utils`)
 
@@ -138,13 +156,15 @@ API 服务提供 HTTP 接口和 Web 界面，使系统能够被外部调用和�
 2. 创建虚拟环境：`python -m venv venv`
 3. 激活虚拟环境
 4. 安装开发依赖：`pip install -r requirements.txt`
+5. 配置环境变量：创建`.env`文件并设置必要的环境变量
 
 ### 生产环境
 
 推荐使用 Docker 部署：
 
-1. 构建 Docker 镜像：`docker build -t ai-debug .`
-2. 运行容器：`docker run -p 5000:5000 ai-debug`
+1. 创建`.env`文件并设置必要的环境变量
+2. 构建 Docker 镜像：`docker build -t ai-debug .`
+3. 运行容器：`docker-compose up -d`（使用环境变量文件）
 
 也可以使用传统方式部署：
 

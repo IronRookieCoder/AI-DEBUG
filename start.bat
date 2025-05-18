@@ -38,6 +38,28 @@ if not exist ".deps_installed" (
     )
 )
 
+REM 检查环境变量文件
+if exist ".env" (
+    echo 检测到.env环境变量文件
+) else (
+    echo 未检测到.env文件
+    echo 创建示例.env文件...
+    if exist ".env.example" (
+        copy .env.example .env
+        echo 已创建.env文件，请编辑此文件设置您的API密钥
+    ) else (
+        echo 创建默认.env文件...
+        echo # OpenAI API配置 > .env
+        echo OPENAI_API_KEY=your_api_key_here >> .env
+        echo 已创建默认.env文件，请编辑此文件设置您的API密钥
+    )
+)
+
+REM 检查环境变量
+if "%OPENAI_API_KEY%"=="" (
+    echo 注意: 未检测到OPENAI_API_KEY环境变量，将从.env文件加载
+)
+
 REM 解析命令行参数
 set "MODE=api"
 set "HOST=0.0.0.0"

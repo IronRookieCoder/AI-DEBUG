@@ -42,6 +42,28 @@ if [ ! -f ".deps_installed" ]; then
     fi
 fi
 
+# 检查环境变量文件
+if [ -f ".env" ]; then
+    echo "检测到.env环境变量文件"
+else
+    echo "未检测到.env文件"
+    echo "创建示例.env文件..."
+    if [ -f ".env.example" ]; then
+        cp .env.example .env
+        echo "已创建.env文件，请编辑此文件设置您的API密钥"
+    else
+        echo "创建默认.env文件..."
+        echo "# OpenAI API配置" > .env
+        echo "OPENAI_API_KEY=your_api_key_here" >> .env
+        echo "已创建默认.env文件，请编辑此文件设置您的API密钥"
+    fi
+fi
+
+# 检查环境变量
+if [ -z "$OPENAI_API_KEY" ]; then
+    echo "注意: 未检测到OPENAI_API_KEY环境变量，将从.env文件加载"
+fi
+
 # 解析命令行参数
 MODE="api"
 HOST="0.0.0.0"

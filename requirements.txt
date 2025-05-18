@@ -18,6 +18,9 @@ python-dateutil>=2.8.0
 # Markdown (Optional, for formatting)
 markdown>=3.3.0
 
+# Environment Variables
+python-dotenv>=1.0.0
+
 # Testing Tools
 pytest>=6.0.0
 pytest-cov>=2.10.0

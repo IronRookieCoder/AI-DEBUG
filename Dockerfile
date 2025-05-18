@@ -8,6 +8,9 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# 需要在运行容器时提供API密钥
+# 示例: docker run -e OPENAI_API_KEY=your_api_key_here -p 5000:5000 ai-debug
+
 # 安装依赖
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

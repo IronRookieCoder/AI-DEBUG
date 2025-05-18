@@ -171,15 +171,66 @@ pytest src/tests/
 
 配置文件位于 `src/config/config.json`，可以修改以下设置：
 
-- LLM 配置（模型、API 密钥等）
+### LLM 配置
+
+```json
+"llm": {
+  "provider": "openai",       // LLM提供者: openai, azure, anthropic
+  "model": "gpt-4",           // 模型名称
+  "api_key": "${OPENAI_API_KEY}", // API密钥
+  "temperature": 0.3,         // 温度参数
+  "max_tokens": 2000,         // 最大生成令牌数
+  "endpoint": "${AZURE_OPENAI_ENDPOINT}", // Azure OpenAI端点
+  "deployment_name": "${AZURE_OPENAI_DEPLOYMENT}" // Azure OpenAI部署名称
+}
+```
+
+### 其他配置
+
 - Bug 知识库配置
 - API 服务配置
 - 日志配置
 
+系统支持使用环境变量来设置敏感信息（如 API 密钥）。有两种方式可以设置环境变量：
+
+### 1. 使用环境变量文件（推荐）
+
+在项目根目录创建一个 `.env` 文件（或复制 `.env.example`），然后设置您的环境变量：
+
+```
+# OpenAI API配置
+OPENAI_API_KEY=your_actual_api_key_here
+
+# Azure OpenAI配置（如果使用Azure提供者）
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+AZURE_OPENAI_DEPLOYMENT=your-deployment-name
+LLM_API_KEY=your-azure-api-key
+
+# Anthropic API配置（如果使用Anthropic提供者）
+ANTHROPIC_API_KEY=your-anthropic-api-key
+```
+
+系统启动时会自动加载此文件中的环境变量。
+
+### 2. 手动设置环境变量
+
+或者，您可以在启动系统前手动设置环境变量：
+
+```bash
+# Windows
+set OPENAI_API_KEY=your_actual_api_key_here
+
+# Linux/Mac
+export OPENAI_API_KEY=your_actual_api_key_here
+```
+
 ## 常见问题
 
+**Q: 如何更换 LLM 提供者？**  
+A: 修改 `src/config/config.json` 中的 `llm.provider` 字段，可选值有 "openai"、"azure" 和 "anthropic"。不同提供者需要配置不同的环境变量，请参考配置说明。系统会自动使用当前版本的 OpenAI SDK（如果安装了）或回退到 HTTP API 请求。
+
 **Q: 如何更换 LLM 模型？**  
-A: 修改 `src/config/config.json` 中的 `llm.model` 字段。
+A: 修改 `src/config/config.json` 中的 `llm.model` 字段。对于 OpenAI 提供者，可以设置为 "gpt-4"、"gpt-3.5-turbo" 等；对于 Azure OpenAI，请使用您的部署名称；对于 Anthropic，可以使用 "claude-3-opus-20240229" 等 Claude 模型。
 
 **Q: 如何连接到自定义的 Bug 知识库？**  
 A: 修改 `src/config/config.json` 中的 `bug_knowledge_base.endpoint` 字段。
