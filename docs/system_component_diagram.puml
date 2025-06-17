@@ -1,0 +1,91 @@
+@startuml system_component
+!theme plain
+skinparam componentStyle rectangle
+
+title AI DEBUG 系统 - 组件图
+
+' 主要组件
+package "AI DEBUG系统" {
+  [主入口] as Main
+  package "输入层" as InputLayer {
+    [输入处理器] as InputProcessor
+    [错误信息处理器] as ErrorProcessor
+    [代码片段处理器] as CodeProcessor
+    [日志处理器] as LogProcessor
+    [问题描述处理器] as DescriptionProcessor
+  }
+  
+  package "LLM分析引擎" as LLMEngine {
+    [LLM接口] as LLMInterface
+    [分析服务] as AnalysisService
+    
+    package "提供者" {
+      [OpenAI提供者] as OpenAIProvider
+      [Azure OpenAI提供者] as AzureProvider
+      [Anthropic提供者] as AnthropicProvider
+    }
+  }
+  
+  package "输出层" as OutputLayer {
+    [结果格式化器] as ResultFormatter
+    [输出渲染器] as OutputRenderer
+  }
+  
+  package "API服务" as APIService {
+    [HTTP服务器] as HTTPServer
+    [API端点] as APIEndpoints
+    [Web界面] as WebUI
+  }
+  
+  package "配置" as Config {
+    [配置管理器] as ConfigManager
+  }
+  
+  package "工具类" as Utils {
+    [环境变量工具] as EnvUtils
+  }
+  
+  package "对话模式" as Dialog {
+    [对话管理器] as DialogManager
+  }
+}
+
+' 外部系统
+cloud "外部LLM服务" as ExternalLLM {
+  [OpenAI API]
+  [Azure OpenAI API]
+  [Anthropic API]
+}
+
+database "BUG知识库" as KnowledgeBase {
+  [向量数据库]
+  [结构化存储]
+}
+
+' 关系连接
+Main --> InputLayer
+Main --> APIService
+Main --> LLMEngine
+Main --> OutputLayer
+Main --> Config
+
+InputLayer --> LLMEngine : 提交处理后的输入
+LLMEngine --> OutputLayer : 返回分析结果
+LLMEngine --> ExternalLLM : 调用API
+APIService --> InputLayer : 传递用户输入
+APIService --> OutputLayer : 获取格式化结果
+APIService --> Dialog : 对话模式
+
+LLMEngine ..> KnowledgeBase : 参考知识库
+Config ..> EnvUtils : 使用
+
+InputProcessor <|-- ErrorProcessor
+InputProcessor <|-- CodeProcessor
+InputProcessor <|-- LogProcessor
+InputProcessor <|-- DescriptionProcessor
+
+LLMInterface <|-- OpenAIProvider
+LLMInterface <|-- AzureProvider
+LLMInterface <|-- AnthropicProvider
+
+@enduml

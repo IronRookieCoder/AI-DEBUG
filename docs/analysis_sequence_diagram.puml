@@ -1,0 +1,38 @@
+@startuml analysis_sequence
+!theme plain
+
+title AI DEBUG 系统 - 分析流程时序图
+
+actor 用户
+participant "API服务" as API
+participant "输入层" as Input
+participant "LLM引擎" as LLM
+participant "输出层" as Output
+participant "外部LLM服务" as ExternalLLM
+
+== API服务模式 ==
+用户 -> API: 提交错误/代码/日志
+activate API
+API -> Input: 处理原始输入
+activate Input
+Input --> API: 返回处理后的输入
+deactivate Input
+
+API -> LLM: 请求分析
+activate LLM
+LLM -> ExternalLLM: 调用LLM API
+activate ExternalLLM
+ExternalLLM --> LLM: 返回分析结果
+deactivate ExternalLLM
+LLM --> API: 返回分析结果
+deactivate LLM
+
+API -> Output: 格式化结果
+activate Output
+Output --> API: 返回格式化的结果
+deactivate Output
+
+API --> 用户: 返回分析报告
+deactivate API
+
+@enduml

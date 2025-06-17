@@ -1,0 +1,24 @@
+@startuml data_flow
+!theme plain
+
+title AI DEBUG 系统 - 数据流图
+
+rectangle "用户" as User
+rectangle "输入源" as InputSource
+rectangle "API服务" as API
+rectangle "输入层" as InputLayer
+rectangle "LLM分析引擎" as LLMEngine
+rectangle "输出层" as OutputLayer
+rectangle "外部LLM服务" as ExternalLLM
+
+User --> InputSource: 提供
+InputSource --> API: 错误信息\n代码片段\n日志信息\n问题描述
+API --> InputLayer: 原始输入
+InputLayer --> LLMEngine: 结构化输入数据
+LLMEngine --> ExternalLLM: LLM提示词
+ExternalLLM --> LLMEngine: LLM回应
+LLMEngine --> OutputLayer: 分析结果
+OutputLayer --> API: 格式化结果
+API --> User: 分析报告
+
+@enduml

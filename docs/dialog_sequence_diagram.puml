@@ -1,0 +1,62 @@
+@startuml dialog_sequence
+!theme plain
+
+title AI DEBUG 系统 - 对话模式时序图
+
+actor 用户
+participant "Web界面" as WebUI
+participant "API服务" as API
+participant "对话管理器" as Dialog
+participant "输入层" as Input
+participant "LLM引擎" as LLM
+participant "输出层" as Output
+participant "外部LLM服务" as ExternalLLM
+
+用户 -> WebUI: 访问对话界面
+activate WebUI
+WebUI --> 用户: 显示对话界面
+deactivate WebUI
+
+用户 -> WebUI: 提交问题/代码/错误
+activate WebUI
+WebUI -> API: 发送对话请求
+activate API
+
+API -> Dialog: 创建/更新对话
+activate Dialog
+Dialog --> API: 返回对话上下文
+deactivate Dialog
+
+API -> Input: 处理输入与上下文
+activate Input
+Input --> API: 返回处理后的输入
+deactivate Input
+
+API -> LLM: 请求分析(带对话历史)
+activate LLM
+LLM -> ExternalLLM: 调用LLM API
+activate ExternalLLM
+ExternalLLM --> LLM: 返回分析结果
+deactivate ExternalLLM
+LLM --> API: 返回分析结果
+deactivate LLM
+
+API -> Output: 格式化结果
+activate Output
+Output --> API: 返回格式化的结果
+deactivate Output
+
+API -> Dialog: 更新对话历史
+activate Dialog
+Dialog --> API: 确认更新
+deactivate Dialog
+
+API --> WebUI: 返回分析结果
+deactivate API
+WebUI --> 用户: 显示分析结果
+deactivate WebUI
+
+用户 -> WebUI: 提问后续问题
+note right: 继续对话流程...
+
+@enduml

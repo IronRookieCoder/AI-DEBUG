@@ -1,0 +1,43 @@
+@startuml deployment
+!theme plain
+
+title AI DEBUG 系统 - 部署架构图
+
+node "用户环境" {
+  [Web浏览器] as Browser
+  [命令行工具] as CLI
+}
+
+node "AI DEBUG系统部署" {
+  [Flask Web服务] as Flask
+  [API服务] as API
+  [LLM分析引擎] as LLMEngine
+  [配置管理器] as Config
+  
+  artifact "配置文件" as ConfigFile
+  
+  Flask -- API
+  API -- LLMEngine
+  LLMEngine -- Config
+  Config -- ConfigFile
+}
+
+cloud "外部服务" {
+  [OpenAI API] as OpenAI
+  [Azure OpenAI API] as AzureOpenAI
+  [Anthropic API] as Anthropic
+}
+
+database "BUG知识库" as KnowledgeBase {
+  [向量数据] as VectorData
+  [历史案例] as Cases
+}
+
+Browser --> Flask: HTTPS请求
+CLI --> API: 直接调用
+LLMEngine --> OpenAI: API调用
+LLMEngine --> AzureOpenAI: API调用
+LLMEngine --> Anthropic: API调用
+LLMEngine --> KnowledgeBase: 检索参考
+
+@enduml
